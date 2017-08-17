@@ -446,6 +446,11 @@ func (v *View) Line(y int) (string, error) {
 	return lineType(v.lines[y]).String(), nil
 }
 
+// LinesCount returns the count of lines of the view's internal buffer
+func (v *View) LinesCount() int {
+	return len(v.lines)
+}
+
 // Word returns a string with the word of the view's internal buffer
 // at the position corresponding to the point (x, y).
 func (v *View) Word(x, y int) (string, error) {
