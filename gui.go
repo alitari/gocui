@@ -45,6 +45,10 @@ type Gui struct {
 	// colors of the GUI.
 	BgColor, FgColor Attribute
 
+	// FrameBgColor and FrameFgColor allow to configure the frame background and foreground
+	// colors of the GUI.
+	FrameBgColor, FrameFgColor Attribute
+
 	// SelBgColor and SelFgColor allow to configure the background and
 	// foreground colors of the frame of the current view.
 	SelBgColor, SelFgColor Attribute
@@ -443,8 +447,8 @@ func (g *Gui) flush() error {
 				fgColor = g.SelFgColor
 				bgColor = g.SelBgColor
 			} else {
-				fgColor = g.FgColor
-				bgColor = g.BgColor
+				fgColor = g.FrameFgColor
+				bgColor = g.FrameBgColor
 			}
 
 			if err := g.drawFrameEdges(v, fgColor, bgColor); err != nil {
@@ -455,6 +459,11 @@ func (g *Gui) flush() error {
 			}
 			if v.Title != "" {
 				if err := g.drawTitle(v, fgColor, bgColor); err != nil {
+					return err
+				}
+			}
+			if v.Footer != "" {
+				if err := g.drawFooter(v, fgColor, bgColor); err != nil {
 					return err
 				}
 			}
@@ -531,18 +540,27 @@ func (g *Gui) drawFrameCorners(v *View, fgColor, bgColor Attribute) error {
 
 // drawTitle draws the title of the view.
 func (g *Gui) drawTitle(v *View, fgColor, bgColor Attribute) error {
+	return g.drawFrameText(v, v.Title, fgColor, bgColor, v.y0)
+}
+
+// drawFooter draws the footer of the view.
+func (g *Gui) drawFooter(v *View, fgColor, bgColor Attribute) error {
+	return g.drawFrameText(v, v.Footer, fgColor, bgColor, v.y1)
+}
+
+func (g *Gui) drawFrameText(v *View, text string, fgColor, bgColor Attribute, y int) error {
 	if v.y0 < 0 || v.y0 >= g.maxY {
 		return nil
 	}
 
-	for i, ch := range v.Title {
+	for i, ch := range text {
 		x := v.x0 + i + 2
 		if x < 0 {
 			continue
 		} else if x > v.x1-2 || x >= g.maxX {
 			break
 		}
-		if err := g.SetRune(x, v.y0, ch, fgColor, bgColor); err != nil {
+		if err := g.SetRune(x, y, ch, fgColor, bgColor); err != nil {
 			return err
 		}
 	}
