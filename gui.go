@@ -6,6 +6,7 @@ package gocui
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/nsf/termbox-go"
 )
@@ -540,27 +541,47 @@ func (g *Gui) drawFrameCorners(v *View, fgColor, bgColor Attribute) error {
 
 // drawTitle draws the title of the view.
 func (g *Gui) drawTitle(v *View, fgColor, bgColor Attribute) error {
-	return g.drawFrameText(v, v.Title, fgColor, bgColor, v.y0)
+	return g.drawFrameText(v, v.Title, fgColor, bgColor, v.y0, true)
 }
 
 // drawFooter draws the footer of the view.
 func (g *Gui) drawFooter(v *View, fgColor, bgColor Attribute) error {
-	return g.drawFrameText(v, v.Footer, fgColor, bgColor, v.y1)
+	return g.drawFrameText(v, v.Footer, fgColor, bgColor, v.y1, false)
 }
 
-func (g *Gui) drawFrameText(v *View, text string, fgColor, bgColor Attribute, y int) error {
+func (g *Gui) drawFrameText(v *View, text string, fgColor, bgColor Attribute, y int, leftbound bool) error {
+
 	if v.y0 < 0 || v.y0 >= g.maxY {
 		return nil
 	}
 
-	for i, ch := range text {
-		x := v.x0 + i + 2
+	fgc := fgColor
+	bgc := bgColor
+	x := v.x0 + 2
+
+	if !leftbound {
+		x = v.x1 - 2 - len(text) + strings.Count(text, "*")
+	}
+
+	for _, ch := range text {
+		if ch == '*' {
+			if fgc == fgColor {
+				fgc = ColorWhite
+				bgc = fgColor
+			} else {
+				fgc = fgColor
+				bgc = bgColor
+			}
+			continue
+		}
+		x = x + 1
+		// x := v.x0 + pos + 2
 		if x < 0 {
 			continue
 		} else if x > v.x1-2 || x >= g.maxX {
 			break
 		}
-		if err := g.SetRune(x, y, ch, fgColor, bgColor); err != nil {
+		if err := g.SetRune(x, y, ch, fgc, bgc); err != nil {
 			return err
 		}
 	}
